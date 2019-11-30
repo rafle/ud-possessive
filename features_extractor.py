@@ -68,6 +68,8 @@ def extract_features(filename, lang):
     for sentence in train:
         external_cases = list_external_cases(sentence, lang, sufficient_tag)
         for token in sentence:
+            if lang in EXTERNAL_CASE and token not in external_cases:
+                continue
             if token.upos not in WANTED_POS:
                 continue
             # either the deprel tag is sufficient, or:
@@ -92,10 +94,10 @@ def extract_features(filename, lang):
             head_case = ', '.join(t for t in head.feats.get("Case", {}))
             dep_marked = "Gen" in token.feats.get("Case", {})
             dep_case = ', '.join(t for t in token.feats.get("Case", {}))
-            try:
-                external_case = external_cases.get(token).form
-            except AttributeError:
-                external_case = False
+            if token in external_cases:
+                external_case = ', '.join((e.form for e in external_cases.get(token)))
+            else:
+                external_case = None
             head_tags = find_tags(head, "Number", "Number[psor]", "Person", "Person[psor]")
             dep_tags = find_tags(token, "Number", "Number[psed]", "Person", "Person[psed]")
             psor_in_dep = find_tags(token, "Number[psor]", "Person[psor]")
