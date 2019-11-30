@@ -97,7 +97,7 @@ def extract_features(filename, lang):
             if token in external_cases:
                 external_case = ', '.join((e.form for e in external_cases.get(token)))
             else:
-                external_case = None
+                external_case = ''
             head_tags = find_tags(head, "Number", "Number[psor]", "Person", "Person[psor]")
             dep_tags = find_tags(token, "Number", "Number[psed]", "Person", "Person[psed]")
             psor_in_dep = find_tags(token, "Number[psor]", "Person[psor]")
