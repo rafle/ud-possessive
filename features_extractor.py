@@ -116,7 +116,7 @@ def extract_features(filename, lang):
 
             sentence_features = [
                 head.upos,
-                head.deprel,
+                head.deprel.split(':')[0],
                 head_marked,
                 head_case,
                 token.upos,
