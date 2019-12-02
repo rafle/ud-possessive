@@ -1,5 +1,6 @@
 import prepare_data
 import features_extractor
+from data_analyser import DataAnalyser
 
 
 SOURCE_DIR = 'source'
@@ -29,7 +30,11 @@ WANTED = {
 prepare_data.main(SOURCE_DIR, DATA_DIR, WANTED)
 langs = features_extractor.handle_languages(DATA_DIR)
 
-for lang, df in langs.items():
-    print(lang)
-    print(df)
+#  for lang, df in langs.items():
+#      print(lang)
+#      print(df)
     #  print(df.describe())
+
+
+analysis = DataAnalyser(langs)
+analysis.draw_dendrogram()
