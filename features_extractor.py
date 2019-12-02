@@ -154,7 +154,7 @@ def handle_languages(data_path):
                     "hd_case",
                     "dp_pos",
                     #  "dep_deprel",
-                    "dp_maked",
+                    "dp_marked",
                     "dp_case",
                     "dist",
                     "head_1st",
