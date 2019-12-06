@@ -24,8 +24,10 @@ WANTED = {
         'North_Sami': {},
         'Hungarian': {},
         'Japanese': {'only': ('GSD', 'PUD', 'Modern')},
+        'Thai': {},
         }
 
+EXPANDABLE_COLS = ('hd_pos', 'hd_deprel', 'hd_case', 'dp_pos')
 
 prepare_data.main(SOURCE_DIR, DATA_DIR, WANTED)
 langs = features_extractor.handle_languages(DATA_DIR)
@@ -36,5 +38,7 @@ langs = features_extractor.handle_languages(DATA_DIR)
     #  print(df.describe())
 
 
-analysis = DataAnalyser(langs)
+analysis = DataAnalyser(langs, EXPANDABLE_COLS)
 analysis.draw_dendrogram()
+analysis.draw_pca()
+analysis.show_all_clusterings()
