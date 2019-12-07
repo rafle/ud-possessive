@@ -11,6 +11,7 @@ WANTED_POS = ("NOUN", "PROPN", "PRON")
 EXTERNAL_CASE = {
         'zh': ('的', 'PART', False),
         'ja': ('の', 'ADP', True),
+        'th': ('ของ', 'ADP', False),
         }
 
 
