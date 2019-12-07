@@ -16,8 +16,8 @@ from sklearn.decomposition import PCA
 class DataAnalyser:
     def __init__(self, dataframe_collection, expandable_cols):
         self.df_collection = dataframe_collection
-        self.data = self.simplify_df():  #  self.df_collection, EXPANDABLE_COLS)
         self.expanded_columns = self.mark_expandable_cols(expandable_cols)
+        self.data = self.simplify_df()
 
 
     def get_data(self):
@@ -25,7 +25,7 @@ class DataAnalyser:
 
 
     def mark_expandable_cols(self, expandable_cols, limit=3):
-        expandable_cols = expandable_cols or self.expanded_columns
+        expandable_cols = expandable_cols
         concat_df = pd.concat(self.df_collection.values())
         columns = OrderedDict()
         for col_name in concat_df.keys():
@@ -36,7 +36,7 @@ class DataAnalyser:
         return columns
 
 
-    def create_vector(self, lang, dataframe):  # , expandable):
+    def create_vector(self, lang, dataframe):
         # there probably is a much better way to do this...
         vector = []
         for col_name, col_type in dataframe.dtypes.items():
@@ -53,10 +53,9 @@ class DataAnalyser:
         return pd.Series(vector, name=lang)
 
 
-    def simplify_df(self):  #  , dataframe_collection):  # , splittable_columns=EXPANDABLE_COLS):
-        #  col_names = self.mark_expandable_cols(self.df_collection, splittable_columns)
+    def simplify_df(self):
         series = [
-                    self.create_vector(lang, df, self.expanded_columns)
+                    self.create_vector(lang, df)
                     for lang, df in self.df_collection.items()
                  ]
         new_col_names = []
@@ -82,7 +81,6 @@ class DataAnalyser:
     def show_clustering(self, algorithm, n_clusters):
         clusters = algorithm(n_clusters=n_clusters).fit(self.data)
         labels = clusters.labels_
-        #  self.show_clusters(labels)
         print(f"Clustering with {algorithm.__name__}:\n")
         for cluster_n in range(max(labels) + 1):
             print(f"Cluster {cluster_n}:")
