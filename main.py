@@ -41,8 +41,8 @@ except FileNotFoundError:
         pickle.dump(langs, f, pickle.HIGHEST_PROTOCOL)
 
 dal = DataAnalyser(langs, EXPANDABLE_COLS)
-dal.show_all_clusterings()
-dal.draw_dendrogram()
-#  dal.draw_pca()
-dal.pca_analysis()
 dal.show_all_clusterings(n_clusters=4)
+dal.show_all_clusterings(n_clusters=5)
+dal.show_all_clusterings(n_clusters=6)
+dal.draw_dendrogram()
+dal.draw_pca_analysis()

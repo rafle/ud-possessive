@@ -2,35 +2,28 @@ from collections import OrderedDict
 from itertools import zip_longest
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-#  import seaborn as sns
-import scipy as sp
 
 import scipy.cluster.hierarchy as sch
 from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MaxAbsScaler
-import plotly.express as px
 import plotly.graph_objects as go
 
 
-#  EXPANDABLE_COLS = ('hd_pos', 'hd_deprel', 'hd_case', 'dp_pos')
-#
-
-LANG_GROUPS = ((
-        ['ru'],
-        ['et', 'fi', 'hu', 'sme', 'kpv', 'myv', 'krl', 'mdf'],
-        ['tr', 'ug', 'kk'],
-        ['bxr'],
-        ['zh'],
-        ['th'],
-        ['ko'],
-        ['ja'],
-    ))
-
-
 class DataAnalyser:
+    LANG_COLOURS = {
+        ('ru'): 'orange',
+        ('et', 'fi', 'hu', 'sme', 'kpv', 'myv', 'krl', 'mdf'): 'red',
+        ('tr', 'ug', 'kk'): 'green',
+        ('bxr'): 'violet',
+        ('zh'): 'paleturquoise',
+        ('th'): 'brown',
+        ('ko'): 'olive',
+        ('ja'): 'blue',
+    }
+
+
     def __init__(self, dataframe_collection, expandable_cols):
         self.df_collection = dataframe_collection
         self.expanded_columns = self.mark_expandable_cols(expandable_cols)
@@ -43,10 +36,13 @@ class DataAnalyser:
         return self.data
 
 
-    def get_scaled_data(self, scaler=MaxAbsScaler):
+    def get_scaled_data(self, scaler=MaxAbsScaler, data=None):
+        data = data if data is not None else self.data
         # Standardize the data to have a mean of ~0 and a variance of 1
-        return pd.DataFrame(scaler().fit_transform(self.data))
-        #  return pd.DataFrame(StandardScaler().fit_transform(self.data))
+        scaled_df = pd.DataFrame(scaler().fit_transform(data))
+        scaled_df.columns = data.columns
+        scaled_df.index = data.index
+        return scaled_df
 
 
     def mark_expandable_cols(self, expandable_cols, limit=3):
@@ -100,7 +96,7 @@ class DataAnalyser:
         plt.figure(figsize=(20, 10))
         sch.dendrogram(
             sch.linkage(data, method=method),
-            labels=self.labels,
+            labels=data.index,
             leaf_rotation=90
         )
         plt.show()
@@ -111,7 +107,7 @@ class DataAnalyser:
         labels = clusters.labels_
         print(f"\nClustering with {algorithm.__name__}:\n")
         clusters = [[] for r in range(n_clusters)]
-        for group, lang in zip(labels, self.labels):
+        for group, lang in zip(labels, data.index):
             clusters[group].append(lang)
         row_format = '{:<15}' * len(clusters)
         cluster_names = [f"Cluster {n}" for n, _ in enumerate(clusters)]
@@ -127,20 +123,27 @@ class DataAnalyser:
         for clustering in (KMeans, AgglomerativeClustering):
             self.show_clustering(data, clustering, n_clusters)
 
-    # PCA analysis (variance, 2d plot, inertia): code adapted from Dmitriy Kavyazin's
-    # at https://medium.com/@dmitriy.kavyazin/principal-component-analysis-and-k-means-clustering-to-visualize-a-high-dimensional-dataset-577b2a7a5fe2
 
-    def pca_analysis(self):
+    # PCA analysis (variance, 2d plot, inertia): code adapted from Dmitriy Kavyazin's post at
+    # https://medium.com/@dmitriy.kavyazin/principal-component-analysis-and-k-means-clustering-to-visualize-a-high-dimensional-dataset-577b2a7a5fe2
+
+    def find_pca_components(self, data=None):
+        data = data if data is not None else self.scaled_data
         #  X_std = StandardScaler().fit_transform(data)
         # Create a PCA instance: pca
         pca = PCA(n_components=15)
-        principalComponents = pca.fit_transform(self.scaled_data)
+        principalComponents = pca.fit_transform(data)
         # Save components to a DataFrame
         pca_components = pd.DataFrame(principalComponents)
+        return pca, pca_components
+
+
+    def draw_pca_analysis(self):
+        pca, pca_components = self.find_pca_components()
         self.draw_pca_variance(pca, pca_components)
         self.draw_pca_2d_scatterplot(pca_components)
-        #  self.draw_pca_inertia(pca_components)
-        #  draw_pca_3d_scatterplot(pca_components, data)
+        self.draw_pca_inertia(pca_components)
+        self.draw_pca_3d_scatterplot(pca_components)
 
 
     def draw_pca_variance(self, pca, pca_components):
@@ -155,6 +158,7 @@ class DataAnalyser:
 
     def draw_pca_2d_scatterplot(self, pca_components):
         fig, ax = plt.subplots(figsize=(20, 14))
+        #  colours = self.assign_colours()
         ax.scatter(pca_components[0], pca_components[1], alpha=.1, color='black')
         for i, label in enumerate(self.labels):
             ax.annotate(label, (pca_components[0][i], pca_components[1][i]))
@@ -182,11 +186,28 @@ class DataAnalyser:
         plt.show()
 
 
-    def draw_pca_3d_scatterplot(self, pca_components, data):
+    def assign_colours(self, data=None):
+        data = data if data is not None else self.scaled_data
+        colours = []
+        for label in data.index:
+            # I cannot get for/else to work...
+            found = False
+            lang = label.split('_')[0]
+            for lang_group, colour in DataAnalyser.LANG_COLOURS.items():
+                if lang in lang_group:
+                    colours.append(colour)
+                    found = True
+            if not found:
+                colours.append('black')
+        return colours
+
+
+    def draw_pca_3d_scatterplot(self, pca_components, filename='clusters_color.html'):
         d3_labels = []
         for n, label in enumerate(self.labels):
             x, y, z = pca_components.iloc[n, :3]
             d3_labels.append({'text': label, 'x': x, 'y': y, 'z': z})
+        colours = self.assign_colours()
 
         fig = go.Figure()
         fig.add_trace(
@@ -194,8 +215,12 @@ class DataAnalyser:
                 x=pca_components[0],
                 y=pca_components[1],
                 z=pca_components[2],
-                mode='markers'
+                mode='markers',
+                marker={'color': colours}
             )
         )
         fig.update_layout(scene=go.layout.Scene(annotations=d3_labels))
-        fig.write_html('clusters.html', auto_open=True)
+        if filename:
+            fig.write_html(filename, auto_open=True)
+        else:
+            fig.show()
