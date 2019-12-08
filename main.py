@@ -1,3 +1,5 @@
+import pickle
+
 import prepare_data
 import features_extractor
 from data_analyser import DataAnalyser
@@ -6,7 +8,8 @@ from data_analyser import DataAnalyser
 SOURCE_DIR = 'source'
 DATA_DIR = 'data'
 TEST_DIR = 'test'
-
+LANGS_FILE = 'langs.db'
+EXPANDABLE_COLS = ('hd_pos', 'hd_deprel', 'hd_case', 'dp_pos')
 WANTED = {
         'Buryat': {},
         'Kazakh': {},
@@ -27,18 +30,19 @@ WANTED = {
         'Thai': {},
         }
 
-EXPANDABLE_COLS = ('hd_pos', 'hd_deprel', 'hd_case', 'dp_pos')
 
-prepare_data.main(SOURCE_DIR, DATA_DIR, WANTED)
-langs = features_extractor.handle_languages(DATA_DIR)
+try:
+    with open(LANGS_FILE, 'rb') as f:
+        langs = pickle.load(f)
+except FileNotFoundError:
+    prepare_data.main(SOURCE_DIR, DATA_DIR, WANTED)
+    langs = features_extractor.handle_languages(DATA_DIR)
+    with open(LANGS_FILE, 'wb') as f:
+        pickle.dump(langs, f, pickle.HIGHEST_PROTOCOL)
 
-#  for lang, df in langs.items():
-#      print(lang)
-#      print(df)
-    #  print(df.describe())
-
-
-analysis = DataAnalyser(langs, EXPANDABLE_COLS)
-analysis.draw_dendrogram()
-analysis.draw_pca()
-analysis.show_all_clusterings()
+dal = DataAnalyser(langs, EXPANDABLE_COLS)
+dal.show_all_clusterings()
+dal.draw_dendrogram()
+#  dal.draw_pca()
+dal.pca_analysis()
+dal.show_all_clusterings(n_clusters=4)
