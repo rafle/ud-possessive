@@ -1,6 +1,6 @@
 pyconll==2.2.1
 matplotlib==3.0.3
-scipy==1.2.1
+scipy==1.10.0
 plotly==4.3.0
 requests==2.22.0
 pandas==0.24.2
